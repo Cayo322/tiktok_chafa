@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Recommender</title>
+    <link rel='stylesheet' href="{{ url_for('static',filename='stylesheets/style.css') }}" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Video Recommender</h1>
+        </div>
+        <div id="video-container">
+            <!-- Aquí se reproducirán los videos -->
+        </div>
+        <div id="timer">Timer: 0 seconds</div>
+        <button class="next-button" onclick="nextVideo()">Next Video</button>
+        <div class="recommendations-section">
+            <h2>Recommendations</h2>
+            <ul id="recommendations-list">
+                <!-- Aquí se mostrarán las recomendaciones -->
+            </ul>
+        </div>
+    </div>
+    <script>
+        var currentVideoIndex = 0;
+        var videos = [];
+        var recommendations = [];
+        var timerInterval;
+
+        async function fetchVideos() {
+            const response = await fetch('/get_videos');
+            videos = await response.json();
+            playVideo(videos[currentVideoIndex]);
+        }
+
+        function playVideo(video) {
+            var videoContainer = document.getElementById('video-container');
+            videoContainer.innerHTML = `<iframe width="560" height="315" src="${video.link}" frameborder="0" allowfullscreen></iframe>`;
+            fetch('/start_timer', { method: 'POST' });
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(async () => {
+                const response = await fetch('/get_elapsed_time');
+                const data = await response.json();
+                document.getElementById('timer').innerText = `Timer: ${data.elapsed_time.toFixed(2)} seconds`;
+            }, 1000);
+        }
+
+        async function nextVideo() {
+            clearInterval(timerInterval);
+            await fetch('/stop_timer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(videos[currentVideoIndex])
+            });
+            currentVideoIndex++;
+            if (currentVideoIndex < 3) {
+                playVideo(videos[currentVideoIndex]);
+            } else {
+                fetchRecommendationVideo();
+            }
+        }
+
+        async function fetchRecommendationVideo() {
+            const response = await fetch('/get_recommendation_video');
+            const recommendedVideo = await response.json();
+            if (!recommendedVideo.error) {
+                playVideo(recommendedVideo);
+                recommendations.push(recommendedVideo);
+                showRecommendations(recommendations);
+            } else {
+                alert('No recommendations found');
+            }
+        }
+
+        function showRecommendations(recommendations) {
+            var recommendationsList = document.getElementById('recommendations-list');
+            recommendationsList.innerHTML = '';
+            recommendations.forEach(function(video) {
+                var li = document.createElement('li');
+                li.textContent = `${video.name} (genre: ${video.genre})`;
+                recommendationsList.appendChild(li);
+            });
+        }
+
+        window.onload = fetchVideos;
+    </script>
+</body>
+</html>
