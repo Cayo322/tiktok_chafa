@@ -2,26 +2,25 @@ from flask import Flask, render_template, request, jsonify
 import mysql.connector
 import redis
 import time
-import threading
-import json
+import os
 
 app = Flask(__name__)
 
 db_config = {
-    'user': 'root',
-    'password': '12345',
-    'host': 'localhost',
-    'database': 'video_recommendations'
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', 'your_password'),
+    'host': os.getenv('DB_HOST', 'db'),
+    'database': os.getenv('DB_NAME', 'video_recommendations')
 }
 
-r = redis.Redis(host='localhost', port=6379, db=0)
+r = redis.Redis(host=os.getenv('REDIS_HOST', 'redis'), port=int(os.getenv('REDIS_PORT', 6379)), db=0)
 
 class VideoCounter:
     def __init__(self):
         self.total_views = 0
         self.running = True
         self.duration = 0
-        self.user_id = 'user1'  # for simplicity, using a single user
+        self.user_id = 'user1'
         self.start_time = None
 
     def start_counter(self):
@@ -43,11 +42,9 @@ class VideoCounter:
         genre = video['genre']
         duration = self.duration
 
-        # Store the view duration in Redis
         r.hincrbyfloat(f'user:{self.user_id}:genres', genre, duration)
 
     def get_most_watched_genre(self):
-        # Retrieve the most watched genre from Redis
         genres = r.hgetall(f'user:{self.user_id}:genres')
         if not genres:
             return None
@@ -64,7 +61,7 @@ def index():
 def get_videos():
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT name, link, genre FROM videos ORDER BY id LIMIT 3")  # Select the first three videos by id
+    cursor.execute("SELECT name, link, genre FROM videos ORDER BY id LIMIT 3")
     videos = cursor.fetchall()
     conn.close()
     return jsonify(videos)

@@ -2,3 +2,4 @@ Flask
 Redis
 gunicorn
 mysql-connector-python
+watchdog

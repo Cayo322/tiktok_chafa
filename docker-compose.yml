@@ -11,7 +11,7 @@ services:
     environment:
       - DB_HOST=db
       - DB_USER=root
-      - DB_PASSWORD=12345
+      - DB_PASSWORD=your_password
       - DB_NAME=video_recommendations
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -19,12 +19,13 @@ services:
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_ROOT_PASSWORD: your_password
       MYSQL_DATABASE: video_recommendations
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     command: --default-authentication-plugin=mysql_native_password
 
   redis:
