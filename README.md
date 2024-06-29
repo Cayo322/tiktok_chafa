@@ -1,17 +1,19 @@
 git clone https://github.com/Cayo322/tiktok_chafa.git
+
 cd tiktok_chafa
 
+docker-compose up -d
 
 
 docker-compose exec db mysql -u root -p
 
-
-your_password
+colocar:your_password
 
 
 SHOW DATABASES;
 
 USE video_recommendations;
+
 CREATE TABLE IF NOT EXISTS videos (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, link VARCHAR(255) NOT NULL, genre VARCHAR(255) NOT NULL, age_group VARCHAR(255) NOT NULL);
 
 
@@ -20,4 +22,5 @@ INSERT INTO videos (name, link, genre, age_group) VALUES ('CONJURO','https://www
 
 
 docker-compose down
+
 docker-compose up -d
